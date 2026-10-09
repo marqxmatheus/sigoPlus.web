@@ -17,7 +17,7 @@ export function Home() {
           <Link
             key={rota}
             to={rota}
-            className="flex h-44 w-48 flex-col items-center justify-center gap-4 rounded-xl bg-card hover:bg-primary/20"
+            className="flex h-44 w-48 flex-col items-center justify-center gap-4 rounded-md bg-card hover:bg-primary/60"
           >
             <Icone size={52} className="text-primary" />
             <span>{nome}</span>
