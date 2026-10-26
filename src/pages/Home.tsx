@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { Users, ChartNoAxesCombined, LogIn } from 'lucide-react'
 
 const paginas = [
-  { nome: 'Clientes', rota: '/clientes/cadastro', icone: Users },
+  { nome: 'Clientes', rota: '/clientes', icone: Users },
   { nome: 'Relatórios', rota: '/relatorios', icone: ChartNoAxesCombined },
   { nome: 'Login', rota: '/login', icone: LogIn },
 ]

@@ -10,7 +10,7 @@ import {
 
 const links = [
   { nome: 'Home', rota: '/', icone: House },
-  { nome: 'Clientes', rota: '/clientes/cadastro', icone: Users },
+  { nome: 'Clientes', rota: '/clientes', icone: Users },
   { nome: 'Relatórios', rota: '/relatorios', icone: ChartNoAxesCombined },
   { nome: 'Login', rota: '/login', icone: LogIn },
 ]

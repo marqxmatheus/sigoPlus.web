@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { UserRoundPlus } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ArrowLeft, UserRoundPlus } from 'lucide-react'
 
 export function CadastroCliente() {
   const [cliente, setCliente] = useState({
@@ -26,9 +27,19 @@ export function CadastroCliente() {
     <form onSubmit={handleSubmit} className="flex min-h-full flex-1 flex-col">
       <header className="pb-5">
         <div className="mx-auto flex w-full max-w-200 items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold text-foreground">
-            Cadastrar cliente
-          </h1>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/clientes"
+              aria-label="Voltar para clientes"
+              title="Voltar para clientes"
+              className="rounded-md p-1 text-muted transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <ArrowLeft size={26} aria-hidden="true" />
+            </Link>
+            <h1 className="text-2xl font-bold text-foreground">
+              Cadastrar cliente
+            </h1>
+          </div>
           <UserRoundPlus
             size={28}
             aria-hidden="true"
