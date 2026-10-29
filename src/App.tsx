@@ -15,6 +15,7 @@ export default function App() {
           <Route path="/relatorios" element={<Relatorios />} />
           <Route path="/clientes" element={<Clientes />} />
           <Route path="/clientes/cadastro" element={<CadastroCliente />} />
+          <Route path="/clientes/:id/editar" element={<CadastroCliente />} />
           <Route path="/login" element={<Login />} />
         </Route>
       </Routes>

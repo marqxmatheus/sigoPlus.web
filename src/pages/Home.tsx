@@ -17,9 +17,12 @@ export function Home() {
           <Link
             key={rota}
             to={rota}
-            className="flex h-44 w-48 flex-col items-center justify-center gap-4 rounded-md bg-card hover:bg-primary/60"
+            className="group flex h-44 w-48 flex-col items-center justify-center gap-4 rounded-md bg-card transition-colors hover:bg-primary hover:text-white"
           >
-            <Icone size={52} className="text-primary" />
+            <Icone
+              size={52}
+              className="text-primary transition-colors group-hover:text-white"
+            />
             <span>{nome}</span>
           </Link>
         ))}

@@ -1,11 +1,22 @@
-import { useQuery } from '@tanstack/react-query'
-import { AlertCircle, LoaderCircle, UserRoundPlus, Users } from 'lucide-react'
-import { Link, useLocation } from 'react-router-dom'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  AlertCircle,
+  CircleCheck,
+  LoaderCircle,
+  Pencil,
+  Trash2,
+  UserRoundPlus,
+  Users,
+  X,
+} from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getApiErrorMessage } from '../api/client'
-import { listarClientes } from '../api/clientes'
+import { excluirCliente, listarClientes } from '../api/clientes'
+import type { Cliente } from '../types/cliente'
 import { formatarCpfCnpj } from '../utils/formatters'
 
-const colunas = ['Nome', 'CPF/CNPJ', 'Telefone', 'E-mail', 'Endereço']
+const colunas = ['Nome', 'CPF/CNPJ', 'Telefone', 'E-mail', 'Endereço', 'Ações']
 
 type LocationState = {
   mensagem?: string
@@ -13,12 +24,56 @@ type LocationState = {
 
 export function Clientes() {
   const location = useLocation()
-  const mensagem = (location.state as LocationState | null)?.mensagem
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const mensagemRecebida = (location.state as LocationState | null)?.mensagem
+  const [mensagem, setMensagem] = useState<string | null>(
+    mensagemRecebida ?? null,
+  )
+  const [erroExclusao, setErroExclusao] = useState<string | null>(null)
+  const [clienteExcluindoId, setClienteExcluindoId] = useState<number | null>(
+    null,
+  )
   const clientesQuery = useQuery({
     queryKey: ['clientes'],
     queryFn: listarClientes,
   })
   const clientes = clientesQuery.data ?? []
+
+  useEffect(() => {
+    if (!mensagemRecebida) return
+
+    navigate(location.pathname, { replace: true, state: null })
+  }, [location.pathname, mensagemRecebida, navigate])
+
+  useEffect(() => {
+    if (!mensagem) return
+
+    const temporizador = window.setTimeout(() => setMensagem(null), 3000)
+
+    return () => window.clearTimeout(temporizador)
+  }, [mensagem])
+
+  async function excluir(cliente: Cliente) {
+    const confirmou = window.confirm(
+      `Excluir o cliente ${cliente.nome}? Os dados pessoais serão apagados e esta ação não poderá ser desfeita.`,
+    )
+
+    if (!confirmou) return
+
+    setClienteExcluindoId(cliente.id)
+    setErroExclusao(null)
+
+    try {
+      await excluirCliente(cliente.id)
+      await queryClient.invalidateQueries({ queryKey: ['clientes'] })
+      setMensagem('Cliente excluído com sucesso.')
+    } catch (erro) {
+      setErroExclusao(getApiErrorMessage(erro))
+    } finally {
+      setClienteExcluindoId(null)
+    }
+  }
 
   return (
     <section className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6">
@@ -40,7 +95,7 @@ export function Clientes() {
 
         <Link
           to="/clientes/cadastro"
-          className="flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 font-medium text-white transition-colors hover:bg-primary-light"
+          className="flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 font-medium text-white transition-colors hover:bg-primary-dark"
         >
           <UserRoundPlus size={20} aria-hidden="true" />
           Cadastrar cliente
@@ -50,34 +105,66 @@ export function Clientes() {
       {mensagem && (
         <div
           role="status"
-          className="rounded-md border border-success/40 bg-success/10 px-4 py-3 text-sm text-success"
+          aria-live="polite"
+          className="fixed top-5 right-5 z-50 flex w-[calc(100%-2.5rem)] max-w-sm items-center gap-3 rounded-md bg-success px-4 py-3 text-sm font-medium text-white shadow-lg"
         >
-          {mensagem}
+          <CircleCheck className="shrink-0" size={20} aria-hidden="true" />
+          <span className="flex-1">{mensagem}</span>
+          <button
+            type="button"
+            aria-label="Fechar alerta"
+            title="Fechar"
+            onClick={() => setMensagem(null)}
+            className="cursor-pointer rounded-sm p-1 text-white transition-colors hover:bg-success-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </div>
+      )}
+
+      {erroExclusao && (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-3 rounded-md bg-danger px-4 py-3 text-sm font-medium text-white"
+        >
+          <span>{erroExclusao}</span>
+          <button
+            type="button"
+            aria-label="Fechar erro"
+            title="Fechar"
+            onClick={() => setErroExclusao(null)}
+            className="cursor-pointer rounded-sm p-1 transition-colors hover:bg-danger-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
         </div>
       )}
 
       {clientesQuery.isLoading && (
         <div className="flex flex-1 items-center justify-center gap-3 py-20 text-muted">
-          <LoaderCircle className="animate-spin text-primary" aria-hidden="true" />
+          <LoaderCircle
+            className="animate-spin text-primary"
+            aria-hidden="true"
+          />
           Carregando clientes...
         </div>
       )}
 
       {clientesQuery.isError && (
-        <div className="flex flex-col items-center justify-center gap-4 rounded-md border border-danger/40 bg-danger/10 px-6 py-12 text-center">
-          <AlertCircle className="text-danger" aria-hidden="true" />
+        <div className="flex flex-col items-center justify-center gap-4 rounded-md bg-danger px-6 py-12 text-center text-white">
+          <AlertCircle aria-hidden="true" />
           <div>
-            <p className="font-medium text-foreground">
+            <p className="font-medium text-white">
               Não foi possível carregar os clientes
             </p>
-            <p className="mt-1 text-sm text-muted">
+            <p className="mt-1 text-sm text-white/80">
               {getApiErrorMessage(clientesQuery.error)}
             </p>
           </div>
           <button
             type="button"
             onClick={() => clientesQuery.refetch()}
-            className="cursor-pointer rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+            className="cursor-pointer rounded-md bg-white px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-foreground"
           >
             Tentar novamente
           </button>
@@ -108,7 +195,9 @@ export function Clientes() {
                     <th
                       key={coluna}
                       scope="col"
-                      className="border-b border-border px-5 py-4 font-medium"
+                      className={`border-b border-border px-5 py-4 font-medium ${
+                        coluna === 'Ações' ? 'text-right' : ''
+                      }`}
                     >
                       {coluna}
                     </th>
@@ -120,7 +209,7 @@ export function Clientes() {
                 {clientes.map((cliente) => (
                   <tr
                     key={cliente.id}
-                    className="text-sm text-foreground transition-colors hover:bg-surface/60"
+                    className="text-sm text-foreground transition-colors hover:bg-surface"
                   >
                     <td className="whitespace-nowrap px-5 py-4 font-medium">
                       {cliente.nome}
@@ -136,6 +225,36 @@ export function Clientes() {
                     </td>
                     <td className="whitespace-nowrap px-5 py-4 text-muted">
                       {cliente.endereco || '—'}
+                    </td>
+                    <td className="whitespace-nowrap px-5 py-4 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Link
+                          to={`/clientes/${cliente.id}/editar`}
+                          aria-label={`Editar cliente ${cliente.nome}`}
+                          title="Editar cliente"
+                          className="inline-flex rounded-md bg-primary p-2 text-white transition-colors hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                        >
+                          <Pencil size={18} aria-hidden="true" />
+                        </Link>
+                        <button
+                          type="button"
+                          aria-label={`Excluir cliente ${cliente.nome}`}
+                          title="Excluir cliente"
+                          disabled={clienteExcluindoId !== null}
+                          onClick={() => excluir(cliente)}
+                          className="inline-flex cursor-pointer rounded-md bg-danger p-2 text-white transition-colors hover:bg-danger-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {clienteExcluindoId === cliente.id ? (
+                            <LoaderCircle
+                              size={18}
+                              className="animate-spin"
+                              aria-hidden="true"
+                            />
+                          ) : (
+                            <Trash2 size={18} aria-hidden="true" />
+                          )}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

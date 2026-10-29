@@ -23,7 +23,7 @@ export function Sidebar() {
       <button
         onClick={() => setAberta(!aberta)}
         aria-label={aberta ? 'Recolher menu' : 'Expandir menu'}
-        className="mb-8 cursor-pointer p-3 hover:bg-card"
+        className="mb-8 cursor-pointer p-3 text-muted transition-colors hover:bg-card hover:text-foreground"
       >
         <PanelLeft />
       </button>
@@ -37,8 +37,8 @@ export function Sidebar() {
             className={({ isActive }) =>
               `flex items-center gap-3 p-3 ${
                 isActive
-                  ? 'bg-primary/20 text-primary'
-                  : 'text-muted hover:bg-card'
+                  ? 'bg-primary text-white'
+                  : 'text-muted hover:bg-card hover:text-foreground'
               }`
             }
           >

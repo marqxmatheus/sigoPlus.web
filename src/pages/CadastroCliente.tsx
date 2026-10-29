@@ -1,9 +1,18 @@
-import { ArrowLeft, LoaderCircle, UserRoundPlus } from 'lucide-react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  AlertCircle,
+  ArrowLeft,
+  LoaderCircle,
+  Pencil,
+  UserRoundPlus,
+} from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getApiErrorMessage } from '../api/client'
-import { criarCliente } from '../api/clientes'
+import { atualizarCliente, buscarCliente, criarCliente } from '../api/clientes'
+import type { Cliente, ClienteInput } from '../types/cliente'
+import { formatarCpfCnpj } from '../utils/formatters'
 
 type ClienteForm = {
   nome: string
@@ -13,8 +22,116 @@ type ClienteForm = {
   endereco: string
 }
 
+const formularioVazio: ClienteForm = {
+  nome: '',
+  cpfCnpj: '',
+  telefone: '',
+  email: '',
+  endereco: '',
+}
+
+function dadosDoCliente(cliente: Cliente): ClienteForm {
+  return {
+    nome: cliente.nome,
+    cpfCnpj: formatarCpfCnpj(cliente.cpf_cnpj),
+    telefone: cliente.telefone,
+    email: cliente.email,
+    endereco: cliente.endereco,
+  }
+}
+
 export function CadastroCliente() {
+  const { id } = useParams<{ id: string }>()
+  const modoEdicao = id !== undefined
+  const clienteId = modoEdicao ? Number(id) : null
+  const idValido =
+    clienteId === null || (Number.isInteger(clienteId) && clienteId > 0)
+  const clienteQuery = useQuery({
+    queryKey: ['cliente', clienteId],
+    queryFn: () => buscarCliente(clienteId!),
+    enabled: modoEdicao && idValido,
+  })
+
+  if (!idValido) {
+    return <ErroAoCarregarCliente mensagem="O cliente informado é inválido." />
+  }
+
+  if (modoEdicao && clienteQuery.isLoading) {
+    return (
+      <div className="flex flex-1 items-center justify-center gap-3 py-20 text-muted">
+        <LoaderCircle
+          className="animate-spin text-primary"
+          aria-hidden="true"
+        />
+        Carregando cliente...
+      </div>
+    )
+  }
+
+  if (modoEdicao && clienteQuery.isError) {
+    return (
+      <ErroAoCarregarCliente
+        mensagem={getApiErrorMessage(clienteQuery.error)}
+        tentarNovamente={() => clienteQuery.refetch()}
+      />
+    )
+  }
+
+  return (
+    <FormularioCliente
+      key={clienteQuery.data?.id ?? 'novo'}
+      cliente={clienteQuery.data ?? null}
+    />
+  )
+}
+
+type ErroAoCarregarClienteProps = {
+  mensagem: string
+  tentarNovamente?: () => void
+}
+
+function ErroAoCarregarCliente({
+  mensagem,
+  tentarNovamente,
+}: ErroAoCarregarClienteProps) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-md bg-danger px-6 py-12 text-center text-white">
+      <AlertCircle aria-hidden="true" />
+      <div>
+        <p className="font-medium text-white">
+          Não foi possível carregar o cliente
+        </p>
+        <p className="mt-1 text-sm text-white/80">{mensagem}</p>
+      </div>
+      <div className="flex gap-3">
+        <Link
+          to="/clientes"
+          className="rounded-md border border-white/70 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white hover:text-danger"
+        >
+          Voltar
+        </Link>
+        {tentarNovamente && (
+          <button
+            type="button"
+            onClick={tentarNovamente}
+            className="cursor-pointer rounded-md bg-white px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-foreground"
+          >
+            Tentar novamente
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+type FormularioClienteProps = {
+  cliente: Cliente | null
+}
+
+function FormularioCliente({ cliente }: FormularioClienteProps) {
+  const modoEdicao = cliente !== null
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [salvando, setSalvando] = useState(false)
   const [erroApi, setErroApi] = useState<string | null>(null)
   const {
@@ -22,31 +139,37 @@ export function CadastroCliente() {
     handleSubmit,
     formState: { errors },
   } = useForm<ClienteForm>({
-    defaultValues: {
-      nome: '',
-      cpfCnpj: '',
-      telefone: '',
-      email: '',
-      endereco: '',
-    },
+    defaultValues: cliente ? dadosDoCliente(cliente) : formularioVazio,
   })
 
-  async function cadastrarCliente(cliente: ClienteForm) {
+  async function salvarCliente(dados: ClienteForm) {
     setSalvando(true)
     setErroApi(null)
 
     try {
-      await criarCliente({
-        nome: cliente.nome,
-        cpf_cnpj: cliente.cpfCnpj.replace(/\D/g, ''),
-        telefone: cliente.telefone,
-        email: cliente.email,
-        endereco: cliente.endereco,
-      })
+      const dadosCliente: ClienteInput = {
+        nome: dados.nome,
+        cpf_cnpj: dados.cpfCnpj.replace(/\D/g, ''),
+        telefone: dados.telefone,
+        email: dados.email,
+        endereco: dados.endereco,
+      }
+
+      if (cliente) {
+        await atualizarCliente(cliente.id, dadosCliente)
+      } else {
+        await criarCliente(dadosCliente)
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ['clientes'] })
 
       navigate('/clientes', {
         replace: true,
-        state: { mensagem: 'Cliente cadastrado com sucesso.' },
+        state: {
+          mensagem: modoEdicao
+            ? 'Cliente editado com sucesso.'
+            : 'Cliente cadastrado com sucesso.',
+        },
       })
     } catch (erro) {
       setErroApi(getApiErrorMessage(erro))
@@ -57,7 +180,7 @@ export function CadastroCliente() {
 
   return (
     <form
-      onSubmit={handleSubmit(cadastrarCliente)}
+      onSubmit={handleSubmit(salvarCliente)}
       className="flex min-h-full flex-1 flex-col"
       noValidate
     >
@@ -68,19 +191,27 @@ export function CadastroCliente() {
               to="/clientes"
               aria-label="Voltar para clientes"
               title="Voltar para clientes"
-              className="rounded-md p-1 text-muted transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="rounded-md p-1 text-muted transition-colors hover:bg-primary hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               <ArrowLeft size={26} aria-hidden="true" />
             </Link>
             <h1 className="text-2xl font-bold text-foreground">
-              Cadastrar cliente
+              {modoEdicao ? 'Editar cliente' : 'Cadastrar cliente'}
             </h1>
           </div>
-          <UserRoundPlus
-            size={28}
-            aria-hidden="true"
-            className="shrink-0 text-primary"
-          />
+          {modoEdicao ? (
+            <Pencil
+              size={28}
+              aria-hidden="true"
+              className="shrink-0 text-primary"
+            />
+          ) : (
+            <UserRoundPlus
+              size={28}
+              aria-hidden="true"
+              className="shrink-0 text-primary"
+            />
+          )}
         </div>
       </header>
 
@@ -136,10 +267,7 @@ export function CadastroCliente() {
               className="h-12 w-full rounded-md border-2 border-border/40 bg-surface px-4 text-foreground outline-none placeholder:text-muted focus:border-primary"
             />
             {errors.cpfCnpj && (
-              <p
-                role="alert"
-                className="mt-1 text-sm text-danger"
-              >
+              <p role="alert" className="mt-1 text-sm text-danger">
                 {errors.cpfCnpj.message}
               </p>
             )}
@@ -168,10 +296,7 @@ export function CadastroCliente() {
               className="h-12 w-full rounded-md border-2 border-border/40 bg-surface px-4 text-foreground outline-none placeholder:text-muted focus:border-primary"
             />
             {errors.telefone && (
-              <p
-                role="alert"
-                className="mt-1 text-sm text-danger"
-              >
+              <p role="alert" className="mt-1 text-sm text-danger">
                 {errors.telefone.message}
               </p>
             )}
@@ -227,7 +352,7 @@ export function CadastroCliente() {
         {erroApi && (
           <div
             role="alert"
-            className="mt-6 rounded-md border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger"
+            className="mt-6 rounded-md bg-danger px-4 py-3 text-sm font-medium text-white"
           >
             {erroApi}
           </div>
@@ -236,12 +361,20 @@ export function CadastroCliente() {
         <button
           type="submit"
           disabled={salvando}
-          className="mt-7 flex w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-6 py-3 font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-7 flex w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-6 py-3 font-medium text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
         >
           {salvando && (
-            <LoaderCircle size={20} className="animate-spin" aria-hidden="true" />
+            <LoaderCircle
+              size={20}
+              className="animate-spin"
+              aria-hidden="true"
+            />
           )}
-          {salvando ? 'Salvando...' : 'Salvar'}
+          {salvando
+            ? 'Salvando...'
+            : modoEdicao
+              ? 'Salvar alterações'
+              : 'Salvar'}
         </button>
       </div>
     </form>
