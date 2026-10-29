@@ -4,7 +4,6 @@ import { Home } from './pages/Home'
 import { Relatorios } from './pages/Relatorios'
 import { CadastroCliente } from './pages/CadastroCliente'
 import { Clientes } from './pages/Clientes'
-import { Login } from './pages/Login'
 import { Veiculos } from './pages/Veiculos'
 import { CadastroVeiculo } from './pages/CadastroVeiculo'
 import { Servicos } from './pages/Servicos'
@@ -33,7 +32,6 @@ export default function App() {
           <Route path="/pecas" element={<Pecas />} />
           <Route path="/pecas/cadastro" element={<CadastroPeca />} />
           <Route path="/pecas/:id/editar" element={<CadastroPeca />} />
-          <Route path="/login" element={<Login />} />
         </Route>
       </Routes>
     </BrowserRouter>

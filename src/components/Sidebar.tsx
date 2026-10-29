@@ -7,7 +7,6 @@ import {
   Wrench,
   Package,
   ChartNoAxesCombined,
-  LogIn,
   PanelLeft,
 } from 'lucide-react'
 
@@ -18,7 +17,6 @@ const links = [
   { nome: 'Serviços', rota: '/servicos', icone: Wrench },
   { nome: 'Peças', rota: '/pecas', icone: Package },
   { nome: 'Relatórios', rota: '/relatorios', icone: ChartNoAxesCombined },
-  { nome: 'Login', rota: '/login', icone: LogIn },
 ]
 
 export function Sidebar() {

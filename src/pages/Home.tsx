@@ -3,7 +3,6 @@ import {
   ArrowRight,
   CarFront,
   ChartNoAxesCombined,
-  LogIn,
   Package,
   Users,
   Wrench,
@@ -39,12 +38,6 @@ const paginas = [
     descricao: 'Consulte os indicadores e resultados da oficina.',
     rota: '/relatorios',
     icone: ChartNoAxesCombined,
-  },
-  {
-    nome: 'Login',
-    descricao: 'Acesse sua conta no sistema.',
-    rota: '/login',
-    icone: LogIn,
   },
 ]
 
