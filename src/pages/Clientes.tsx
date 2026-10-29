@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertCircle,
   CircleCheck,
+  Eye,
   LoaderCircle,
   Pencil,
   Trash2,
@@ -230,6 +231,14 @@ export function Clientes() {
                     </td>
                     <td className="whitespace-nowrap px-5 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
+                        <Link
+                          to={`/clientes/${cliente.id}`}
+                          aria-label={`Visualizar cliente ${cliente.nome}`}
+                          title="Visualizar cliente"
+                          className="inline-flex rounded-md bg-border p-2 text-white transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+                        >
+                          <Eye size={18} aria-hidden="true" />
+                        </Link>
                         <Link
                           to={`/clientes/${cliente.id}/editar`}
                           aria-label={`Editar cliente ${cliente.nome}`}

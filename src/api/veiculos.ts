@@ -8,6 +8,13 @@ export async function listarVeiculos() {
   return data
 }
 
+export async function listarVeiculosPorCliente(clienteId: number) {
+  const { data } = await api.get<Veiculo[]>(
+    `/api/v1/clientes/${clienteId}/veiculos`,
+  )
+  return data
+}
+
 export async function criarVeiculo(veiculo: VeiculoInput) {
   const { data } = await api.post<Veiculo>(caminho, veiculo)
   return data

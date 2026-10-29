@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { getApiErrorMessage } from '../api/client'
 import { listarClientes } from '../api/clientes'
 import { atualizarVeiculo, buscarVeiculo, criarVeiculo } from '../api/veiculos'
@@ -48,6 +48,7 @@ function dadosDoVeiculo(veiculo: Veiculo, clientes: Cliente[]): VeiculoForm {
 
 export function CadastroVeiculo() {
   const { id } = useParams<{ id: string }>()
+  const [searchParams] = useSearchParams()
   const modoEdicao = id !== undefined
   const veiculoId = modoEdicao ? Number(id) : null
   const idValido =
@@ -91,6 +92,13 @@ export function CadastroVeiculo() {
   }
 
   const clientes = clientesQuery.data ?? []
+  const clienteIdDeOrigem = searchParams.get('clienteId') ?? ''
+  const clienteDeOrigemValido = clientes.some(
+    (cliente) => String(cliente.id) === clienteIdDeOrigem,
+  )
+  const rotaRetorno = clienteDeOrigemValido
+    ? `/clientes/${clienteIdDeOrigem}`
+    : '/veiculos'
 
   if (clientes.length === 0) {
     return <SemClientes />
@@ -98,9 +106,13 @@ export function CadastroVeiculo() {
 
   return (
     <FormularioVeiculo
-      key={veiculoQuery.data?.id ?? 'novo'}
+      key={veiculoQuery.data?.id ?? `novo-${clienteIdDeOrigem}`}
       veiculo={veiculoQuery.data ?? null}
       clientes={clientes}
+      clienteIdInicial={
+        !modoEdicao && clienteDeOrigemValido ? clienteIdDeOrigem : ''
+      }
+      rotaRetorno={rotaRetorno}
     />
   )
 }
@@ -169,9 +181,16 @@ function SemClientes() {
 type FormularioVeiculoProps = {
   veiculo: Veiculo | null
   clientes: Cliente[]
+  clienteIdInicial: string
+  rotaRetorno: string
 }
 
-function FormularioVeiculo({ veiculo, clientes }: FormularioVeiculoProps) {
+function FormularioVeiculo({
+  veiculo,
+  clientes,
+  clienteIdInicial,
+  rotaRetorno,
+}: FormularioVeiculoProps) {
   const modoEdicao = veiculo !== null
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -184,7 +203,7 @@ function FormularioVeiculo({ veiculo, clientes }: FormularioVeiculoProps) {
   } = useForm<VeiculoForm>({
     defaultValues: veiculo
       ? dadosDoVeiculo(veiculo, clientes)
-      : formularioVazio,
+      : { ...formularioVazio, clienteId: clienteIdInicial },
   })
 
   async function salvarVeiculo(dados: VeiculoForm) {
@@ -208,7 +227,7 @@ function FormularioVeiculo({ veiculo, clientes }: FormularioVeiculoProps) {
 
       await queryClient.invalidateQueries({ queryKey: ['veiculos'] })
 
-      navigate('/veiculos', {
+      navigate(rotaRetorno, {
         replace: true,
         state: {
           mensagem: modoEdicao
@@ -233,7 +252,7 @@ function FormularioVeiculo({ veiculo, clientes }: FormularioVeiculoProps) {
         <div className="mx-auto flex w-full max-w-200 items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link
-              to="/veiculos"
+              to={rotaRetorno}
               aria-label="Voltar para veículos"
               title="Voltar para veículos"
               className="rounded-md p-1 text-muted transition-colors hover:bg-primary hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"

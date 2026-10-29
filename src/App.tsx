@@ -11,6 +11,7 @@ import { Servicos } from './pages/Servicos'
 import { CadastroServico } from './pages/CadastroServico'
 import { Pecas } from './pages/Pecas'
 import { CadastroPeca } from './pages/CadastroPeca'
+import { DetalhesCliente } from './pages/DetalhesCliente'
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/relatorios" element={<Relatorios />} />
           <Route path="/clientes" element={<Clientes />} />
           <Route path="/clientes/cadastro" element={<CadastroCliente />} />
+          <Route path="/clientes/:id" element={<DetalhesCliente />} />
           <Route path="/clientes/:id/editar" element={<CadastroCliente />} />
           <Route path="/veiculos" element={<Veiculos />} />
           <Route path="/veiculos/cadastro" element={<CadastroVeiculo />} />
