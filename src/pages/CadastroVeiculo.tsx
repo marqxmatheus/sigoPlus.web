@@ -360,7 +360,7 @@ function FormularioVeiculo({ veiculo, clientes }: FormularioVeiculoProps) {
             <input
               id="marca"
               type="text"
-              placeholder="Ex.: Volkswagen"
+              placeholder="Ex.: Honda"
               maxLength={50}
               {...register('marca')}
               className="h-12 w-full rounded-md border-2 border-border/40 bg-surface px-4 text-foreground outline-none placeholder:text-muted focus:border-primary"
@@ -378,7 +378,7 @@ function FormularioVeiculo({ veiculo, clientes }: FormularioVeiculoProps) {
             <input
               id="modelo"
               type="text"
-              placeholder="Ex.: Gol"
+              placeholder="Ex.: CG 160"
               maxLength={50}
               {...register('modelo')}
               className="h-12 w-full rounded-md border-2 border-border/40 bg-surface px-4 text-foreground outline-none placeholder:text-muted focus:border-primary"

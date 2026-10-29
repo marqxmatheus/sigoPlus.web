@@ -1,16 +1,16 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { Package } from 'lucide-react'
 import { MainLayout } from './components/MainLayout'
 import { Home } from './pages/Home'
 import { Relatorios } from './pages/Relatorios'
 import { CadastroCliente } from './pages/CadastroCliente'
 import { Clientes } from './pages/Clientes'
 import { Login } from './pages/Login'
-import { ModuloEmDesenvolvimento } from './pages/ModuloEmDesenvolvimento'
 import { Veiculos } from './pages/Veiculos'
 import { CadastroVeiculo } from './pages/CadastroVeiculo'
 import { Servicos } from './pages/Servicos'
 import { CadastroServico } from './pages/CadastroServico'
+import { Pecas } from './pages/Pecas'
+import { CadastroPeca } from './pages/CadastroPeca'
 
 export default function App() {
   return (
@@ -28,10 +28,9 @@ export default function App() {
           <Route path="/servicos" element={<Servicos />} />
           <Route path="/servicos/cadastro" element={<CadastroServico />} />
           <Route path="/servicos/:id/editar" element={<CadastroServico />} />
-          <Route
-            path="/pecas"
-            element={<ModuloEmDesenvolvimento titulo="Peças" icone={Package} />}
-          />
+          <Route path="/pecas" element={<Pecas />} />
+          <Route path="/pecas/cadastro" element={<CadastroPeca />} />
+          <Route path="/pecas/:id/editar" element={<CadastroPeca />} />
           <Route path="/login" element={<Login />} />
         </Route>
       </Routes>
