@@ -25,3 +25,22 @@ export function formatarPlaca(valor: string) {
 
   return `${placa.slice(0, 3)}-${placa.slice(3)}`
 }
+
+export function formatarMoeda(valor: number) {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(valor)
+}
+
+export function formatarDuracao(minutos: number) {
+  if (minutos < 60) return `${minutos} min`
+
+  const horas = Math.floor(minutos / 60)
+  const minutosRestantes = minutos % 60
+  const textoHoras = `${horas} h`
+
+  return minutosRestantes > 0
+    ? `${textoHoras} ${minutosRestantes} min`
+    : textoHoras
+}
