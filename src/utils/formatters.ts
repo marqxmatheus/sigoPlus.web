@@ -14,3 +14,14 @@ export function formatarCpfCnpj(documento: string) {
 
   return documento
 }
+
+export function formatarPlaca(valor: string) {
+  const placa = valor
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toUpperCase()
+    .slice(0, 7)
+
+  if (placa.length <= 3) return placa
+
+  return `${placa.slice(0, 3)}-${placa.slice(3)}`
+}

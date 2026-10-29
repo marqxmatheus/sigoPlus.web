@@ -3,6 +3,9 @@ import { NavLink } from 'react-router-dom'
 import {
   House,
   Users,
+  CarFront,
+  Wrench,
+  Package,
   ChartNoAxesCombined,
   LogIn,
   PanelLeft,
@@ -11,6 +14,9 @@ import {
 const links = [
   { nome: 'Home', rota: '/', icone: House },
   { nome: 'Clientes', rota: '/clientes', icone: Users },
+  { nome: 'Veículos', rota: '/veiculos', icone: CarFront },
+  { nome: 'Serviços', rota: '/servicos', icone: Wrench },
+  { nome: 'Peças', rota: '/pecas', icone: Package },
   { nome: 'Relatórios', rota: '/relatorios', icone: ChartNoAxesCombined },
   { nome: 'Login', rota: '/login', icone: LogIn },
 ]
@@ -23,7 +29,7 @@ export function Sidebar() {
       <button
         onClick={() => setAberta(!aberta)}
         aria-label={aberta ? 'Recolher menu' : 'Expandir menu'}
-        className="mb-8 cursor-pointer p-3 text-muted transition-colors hover:bg-card hover:text-foreground"
+        className="cursor-pointer p-3 text-muted transition-colors hover:bg-card hover:text-foreground"
       >
         <PanelLeft />
       </button>
