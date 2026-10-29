@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getApiErrorMessage } from '../api/client'
 import { excluirCliente, listarClientes } from '../api/clientes'
+import { ModalConfirmacaoExclusao } from '../components/ModalConfirmacaoExclusao'
 import type { Cliente } from '../types/cliente'
 import { formatarCpfCnpj } from '../utils/formatters'
 
@@ -32,6 +33,9 @@ export function Clientes() {
   )
   const [erroExclusao, setErroExclusao] = useState<string | null>(null)
   const [clienteExcluindoId, setClienteExcluindoId] = useState<number | null>(
+    null,
+  )
+  const [clienteParaExcluir, setClienteParaExcluir] = useState<Cliente | null>(
     null,
   )
   const clientesQuery = useQuery({
@@ -54,13 +58,10 @@ export function Clientes() {
     return () => window.clearTimeout(temporizador)
   }, [mensagem])
 
-  async function excluir(cliente: Cliente) {
-    const confirmou = window.confirm(
-      `Excluir o cliente ${cliente.nome}? Os dados pessoais serão apagados e esta ação não poderá ser desfeita.`,
-    )
+  async function confirmarExclusao() {
+    if (!clienteParaExcluir) return
 
-    if (!confirmou) return
-
+    const cliente = clienteParaExcluir
     setClienteExcluindoId(cliente.id)
     setErroExclusao(null)
 
@@ -72,6 +73,7 @@ export function Clientes() {
       setErroExclusao(getApiErrorMessage(erro))
     } finally {
       setClienteExcluindoId(null)
+      setClienteParaExcluir(null)
     }
   }
 
@@ -241,7 +243,10 @@ export function Clientes() {
                           aria-label={`Excluir cliente ${cliente.nome}`}
                           title="Excluir cliente"
                           disabled={clienteExcluindoId !== null}
-                          onClick={() => excluir(cliente)}
+                          onClick={() => {
+                            setErroExclusao(null)
+                            setClienteParaExcluir(cliente)
+                          }}
                           className="inline-flex cursor-pointer rounded-md bg-danger p-2 text-white transition-colors hover:bg-danger-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {clienteExcluindoId === cliente.id ? (
@@ -263,6 +268,29 @@ export function Clientes() {
           </div>
         </div>
       )}
+
+      <ModalConfirmacaoExclusao
+        aberto={clienteParaExcluir !== null}
+        titulo="Excluir cliente"
+        excluindo={clienteExcluindoId !== null}
+        onCancelar={() => setClienteParaExcluir(null)}
+        onConfirmar={confirmarExclusao}
+        descricao={
+          <div className="space-y-2">
+            <p>
+              Tem certeza que deseja excluir o cliente{' '}
+              <strong className="text-foreground">
+                {clienteParaExcluir?.nome}
+              </strong>
+              ?
+            </p>
+            <p className="text-sm">
+              Os dados pessoais serão apagados e esta ação não poderá ser
+              desfeita.
+            </p>
+          </div>
+        }
+      />
     </section>
   )
 }

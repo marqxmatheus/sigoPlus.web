@@ -14,6 +14,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getApiErrorMessage } from '../api/client'
 import { listarClientes } from '../api/clientes'
 import { excluirVeiculo, listarVeiculos } from '../api/veiculos'
+import { ModalConfirmacaoExclusao } from '../components/ModalConfirmacaoExclusao'
 import type { Veiculo } from '../types/veiculo'
 import { formatarPlaca } from '../utils/formatters'
 
@@ -33,6 +34,9 @@ export function Veiculos() {
   )
   const [erroExclusao, setErroExclusao] = useState<string | null>(null)
   const [veiculoExcluindoId, setVeiculoExcluindoId] = useState<number | null>(
+    null,
+  )
+  const [veiculoParaExcluir, setVeiculoParaExcluir] = useState<Veiculo | null>(
     null,
   )
   const veiculosQuery = useQuery({
@@ -65,13 +69,10 @@ export function Veiculos() {
     return () => window.clearTimeout(temporizador)
   }, [mensagem])
 
-  async function excluir(veiculo: Veiculo) {
-    const confirmou = window.confirm(
-      `Excluir o veículo ${formatarPlaca(veiculo.placa)}? Esta ação não poderá ser desfeita.`,
-    )
+  async function confirmarExclusao() {
+    if (!veiculoParaExcluir) return
 
-    if (!confirmou) return
-
+    const veiculo = veiculoParaExcluir
     setVeiculoExcluindoId(veiculo.id)
     setErroExclusao(null)
 
@@ -83,6 +84,7 @@ export function Veiculos() {
       setErroExclusao(getApiErrorMessage(erro))
     } finally {
       setVeiculoExcluindoId(null)
+      setVeiculoParaExcluir(null)
     }
   }
 
@@ -258,7 +260,10 @@ export function Veiculos() {
                           aria-label={`Excluir veículo ${formatarPlaca(veiculo.placa)}`}
                           title="Excluir veículo"
                           disabled={veiculoExcluindoId !== null}
-                          onClick={() => excluir(veiculo)}
+                          onClick={() => {
+                            setErroExclusao(null)
+                            setVeiculoParaExcluir(veiculo)
+                          }}
                           className="inline-flex cursor-pointer rounded-md bg-danger p-2 text-white transition-colors hover:bg-danger-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {veiculoExcluindoId === veiculo.id ? (
@@ -280,6 +285,28 @@ export function Veiculos() {
           </div>
         </div>
       )}
+
+      <ModalConfirmacaoExclusao
+        aberto={veiculoParaExcluir !== null}
+        titulo="Excluir veículo"
+        excluindo={veiculoExcluindoId !== null}
+        onCancelar={() => setVeiculoParaExcluir(null)}
+        onConfirmar={confirmarExclusao}
+        descricao={
+          <div className="space-y-2">
+            <p>
+              Tem certeza que deseja excluir o veículo{' '}
+              <strong className="text-foreground">
+                {veiculoParaExcluir
+                  ? formatarPlaca(veiculoParaExcluir.placa)
+                  : ''}
+              </strong>
+              ?
+            </p>
+            <p className="text-sm">Esta ação não poderá ser desfeita.</p>
+          </div>
+        }
+      />
     </section>
   )
 }

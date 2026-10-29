@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getApiErrorMessage } from '../api/client'
 import { excluirServico, listarServicos } from '../api/servicos'
+import { ModalConfirmacaoExclusao } from '../components/ModalConfirmacaoExclusao'
 import type { Servico } from '../types/servico'
 import { formatarDuracao, formatarMoeda } from '../utils/formatters'
 
@@ -32,6 +33,9 @@ export function Servicos() {
   )
   const [erroExclusao, setErroExclusao] = useState<string | null>(null)
   const [servicoExcluindoId, setServicoExcluindoId] = useState<number | null>(
+    null,
+  )
+  const [servicoParaExcluir, setServicoParaExcluir] = useState<Servico | null>(
     null,
   )
   const servicosQuery = useQuery({
@@ -54,13 +58,10 @@ export function Servicos() {
     return () => window.clearTimeout(temporizador)
   }, [mensagem])
 
-  async function excluir(servico: Servico) {
-    const confirmou = window.confirm(
-      `Excluir o serviço ${servico.descricao}? Esta ação não poderá ser desfeita.`,
-    )
+  async function confirmarExclusao() {
+    if (!servicoParaExcluir) return
 
-    if (!confirmou) return
-
+    const servico = servicoParaExcluir
     setServicoExcluindoId(servico.id)
     setErroExclusao(null)
 
@@ -72,6 +73,7 @@ export function Servicos() {
       setErroExclusao(getApiErrorMessage(erro))
     } finally {
       setServicoExcluindoId(null)
+      setServicoParaExcluir(null)
     }
   }
 
@@ -235,7 +237,10 @@ export function Servicos() {
                           aria-label={`Excluir serviço ${servico.descricao}`}
                           title="Excluir serviço"
                           disabled={servicoExcluindoId !== null}
-                          onClick={() => excluir(servico)}
+                          onClick={() => {
+                            setErroExclusao(null)
+                            setServicoParaExcluir(servico)
+                          }}
                           className="inline-flex cursor-pointer rounded-md bg-danger p-2 text-white transition-colors hover:bg-danger-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {servicoExcluindoId === servico.id ? (
@@ -257,6 +262,26 @@ export function Servicos() {
           </div>
         </div>
       )}
+
+      <ModalConfirmacaoExclusao
+        aberto={servicoParaExcluir !== null}
+        titulo="Excluir serviço"
+        excluindo={servicoExcluindoId !== null}
+        onCancelar={() => setServicoParaExcluir(null)}
+        onConfirmar={confirmarExclusao}
+        descricao={
+          <div className="space-y-2">
+            <p>
+              Tem certeza que deseja excluir o serviço{' '}
+              <strong className="text-foreground">
+                {servicoParaExcluir?.descricao}
+              </strong>
+              ?
+            </p>
+            <p className="text-sm">Esta ação não poderá ser desfeita.</p>
+          </div>
+        }
+      />
     </section>
   )
 }
