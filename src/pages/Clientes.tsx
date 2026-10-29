@@ -14,9 +14,11 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getApiErrorMessage } from '../api/client'
 import { excluirCliente, listarClientes } from '../api/clientes'
+import { CampoBusca } from '../components/CampoBusca'
 import { ModalConfirmacaoExclusao } from '../components/ModalConfirmacaoExclusao'
 import type { Cliente } from '../types/cliente'
 import { formatarCpfCnpj } from '../utils/formatters'
+import { correspondeABusca } from '../utils/search'
 
 const colunas = ['Nome', 'CPF/CNPJ', 'Telefone', 'E-mail', 'Endereço', 'Ações']
 
@@ -33,6 +35,7 @@ export function Clientes() {
     mensagemRecebida ?? null,
   )
   const [erroExclusao, setErroExclusao] = useState<string | null>(null)
+  const [busca, setBusca] = useState('')
   const [clienteExcluindoId, setClienteExcluindoId] = useState<number | null>(
     null,
   )
@@ -44,6 +47,17 @@ export function Clientes() {
     queryFn: listarClientes,
   })
   const clientes = clientesQuery.data ?? []
+  const clientesFiltrados = clientes.filter((cliente) =>
+    correspondeABusca(
+      busca,
+      cliente.nome,
+      cliente.cpf_cnpj,
+      formatarCpfCnpj(cliente.cpf_cnpj),
+      cliente.telefone,
+      cliente.email,
+      cliente.endereco,
+    ),
+  )
 
   useEffect(() => {
     if (!mensagemRecebida) return
@@ -189,6 +203,31 @@ export function Clientes() {
       )}
 
       {clientesQuery.isSuccess && clientes.length > 0 && (
+        <CampoBusca
+          valor={busca}
+          onChange={setBusca}
+          placeholder="Buscar por nome, CPF/CNPJ, telefone ou e-mail"
+          ariaLabel="Buscar clientes"
+        />
+      )}
+
+      {clientesQuery.isSuccess &&
+        clientes.length > 0 &&
+        clientesFiltrados.length === 0 && (
+          <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-border bg-card px-6 py-12 text-center">
+            <Users size={36} className="text-muted" aria-hidden="true" />
+            <div>
+              <p className="font-medium text-foreground">
+                Nenhum cliente encontrado
+              </p>
+              <p className="mt-1 text-sm text-muted">
+                Tente buscar por outro nome ou documento.
+              </p>
+            </div>
+          </div>
+        )}
+
+      {clientesQuery.isSuccess && clientesFiltrados.length > 0 && (
         <div className="overflow-hidden rounded-sm border border-border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full min-w-5xl border-collapse text-left">
@@ -199,7 +238,9 @@ export function Clientes() {
                       key={coluna}
                       scope="col"
                       className={`border-b border-border px-5 py-4 font-medium ${
-                        coluna === 'Ações' ? 'text-right' : ''
+                        coluna === 'Ações'
+                          ? 'sticky right-0 z-10 border-l border-border bg-surface text-right'
+                          : ''
                       }`}
                     >
                       {coluna}
@@ -209,10 +250,10 @@ export function Clientes() {
               </thead>
 
               <tbody className="divide-y divide-border">
-                {clientes.map((cliente) => (
+                {clientesFiltrados.map((cliente) => (
                   <tr
                     key={cliente.id}
-                    className="text-sm text-foreground transition-colors hover:bg-surface"
+                    className="group text-sm text-foreground transition-colors hover:bg-surface"
                   >
                     <td className="whitespace-nowrap px-5 py-4 font-medium">
                       {cliente.nome}
@@ -229,7 +270,7 @@ export function Clientes() {
                     <td className="whitespace-nowrap px-5 py-4 text-muted">
                       {cliente.endereco || '—'}
                     </td>
-                    <td className="whitespace-nowrap px-5 py-4 text-right">
+                    <td className="sticky right-0 z-10 w-px border-l border-border bg-card px-5 py-4 text-right whitespace-nowrap transition-colors group-hover:bg-surface">
                       <div className="flex items-center justify-end gap-1">
                         <Link
                           to={`/clientes/${cliente.id}`}

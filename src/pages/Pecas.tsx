@@ -13,9 +13,11 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getApiErrorMessage } from '../api/client'
 import { excluirPeca, listarPecas } from '../api/pecas'
+import { CampoBusca } from '../components/CampoBusca'
 import { ModalConfirmacaoExclusao } from '../components/ModalConfirmacaoExclusao'
 import type { Peca } from '../types/peca'
 import { formatarMoeda } from '../utils/formatters'
+import { correspondeABusca } from '../utils/search'
 
 const colunas = [
   'Código',
@@ -31,6 +33,8 @@ type LocationState = {
   mensagem?: string
 }
 
+type FiltroEstoque = 'todos' | 'baixo' | 'regular'
+
 export function Pecas() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -40,6 +44,8 @@ export function Pecas() {
     mensagemRecebida ?? null,
   )
   const [erroExclusao, setErroExclusao] = useState<string | null>(null)
+  const [busca, setBusca] = useState('')
+  const [filtroEstoque, setFiltroEstoque] = useState<FiltroEstoque>('todos')
   const [pecaExcluindoId, setPecaExcluindoId] = useState<number | null>(null)
   const [pecaParaExcluir, setPecaParaExcluir] = useState<Peca | null>(null)
   const pecasQuery = useQuery({
@@ -47,6 +53,18 @@ export function Pecas() {
     queryFn: listarPecas,
   })
   const pecas = pecasQuery.data ?? []
+  const pecasFiltradas = pecas.filter((peca) => {
+    const estoqueBaixo = peca.qtd_estoque < peca.estoque_minimo
+    const correspondeAoEstoque =
+      filtroEstoque === 'todos' ||
+      (filtroEstoque === 'baixo' && estoqueBaixo) ||
+      (filtroEstoque === 'regular' && !estoqueBaixo)
+
+    return (
+      correspondeAoEstoque &&
+      correspondeABusca(busca, peca.codigo, peca.descricao)
+    )
+  })
 
   useEffect(() => {
     if (!mensagemRecebida) return
@@ -190,6 +208,45 @@ export function Pecas() {
       )}
 
       {pecasQuery.isSuccess && pecas.length > 0 && (
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <CampoBusca
+            valor={busca}
+            onChange={setBusca}
+            placeholder="Buscar por código ou descrição"
+            ariaLabel="Buscar peças"
+          />
+          <select
+            value={filtroEstoque}
+            onChange={(evento) =>
+              setFiltroEstoque(evento.target.value as FiltroEstoque)
+            }
+            aria-label="Filtrar peças por situação do estoque"
+            className="h-11 rounded-md border-2 border-border/60 bg-surface px-4 text-sm text-foreground outline-none focus:border-primary sm:w-52"
+          >
+            <option value="todos">Todos os estoques</option>
+            <option value="baixo">Estoque baixo</option>
+            <option value="regular">Estoque regular</option>
+          </select>
+        </div>
+      )}
+
+      {pecasQuery.isSuccess &&
+        pecas.length > 0 &&
+        pecasFiltradas.length === 0 && (
+          <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-border bg-card px-6 py-12 text-center">
+            <Package size={40} className="text-muted" aria-hidden="true" />
+            <div>
+              <p className="font-medium text-foreground">
+                Nenhuma peça encontrada
+              </p>
+              <p className="mt-1 text-sm text-muted">
+                Ajuste a busca ou o filtro de estoque.
+              </p>
+            </div>
+          </div>
+        )}
+
+      {pecasQuery.isSuccess && pecasFiltradas.length > 0 && (
         <div className="overflow-hidden rounded-sm border border-border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full min-w-5xl border-collapse text-left">
@@ -200,7 +257,9 @@ export function Pecas() {
                       key={coluna}
                       scope="col"
                       className={`border-b border-border px-5 py-4 font-medium ${
-                        coluna === 'Ações' ? 'text-right' : ''
+                        coluna === 'Ações'
+                          ? 'sticky right-0 z-10 border-l border-border bg-surface text-right'
+                          : ''
                       }`}
                     >
                       {coluna}
@@ -210,13 +269,13 @@ export function Pecas() {
               </thead>
 
               <tbody className="divide-y divide-border">
-                {pecas.map((peca) => {
+                {pecasFiltradas.map((peca) => {
                   const estoqueBaixo = peca.qtd_estoque < peca.estoque_minimo
 
                   return (
                     <tr
                       key={peca.id}
-                      className="text-sm text-foreground transition-colors hover:bg-surface"
+                      className="group text-sm text-foreground transition-colors hover:bg-surface"
                     >
                       <td className="whitespace-nowrap px-5 py-4 font-medium">
                         {peca.codigo}
@@ -240,7 +299,7 @@ export function Pecas() {
                           {estoqueBaixo ? 'Estoque baixo' : 'Regular'}
                         </span>
                       </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-right">
+                      <td className="sticky right-0 z-10 w-px border-l border-border bg-card px-5 py-4 text-right whitespace-nowrap transition-colors group-hover:bg-surface">
                         <div className="flex items-center justify-end gap-1">
                           <Link
                             to={`/pecas/${peca.id}/editar`}

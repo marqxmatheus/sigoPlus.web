@@ -13,9 +13,11 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getApiErrorMessage } from '../api/client'
 import { excluirServico, listarServicos } from '../api/servicos'
+import { CampoBusca } from '../components/CampoBusca'
 import { ModalConfirmacaoExclusao } from '../components/ModalConfirmacaoExclusao'
 import type { Servico } from '../types/servico'
 import { formatarDuracao, formatarMoeda } from '../utils/formatters'
+import { correspondeABusca } from '../utils/search'
 
 const colunas = ['Descrição', 'Valor padrão', 'Tempo estimado', 'Ações']
 
@@ -32,6 +34,7 @@ export function Servicos() {
     mensagemRecebida ?? null,
   )
   const [erroExclusao, setErroExclusao] = useState<string | null>(null)
+  const [busca, setBusca] = useState('')
   const [servicoExcluindoId, setServicoExcluindoId] = useState<number | null>(
     null,
   )
@@ -43,6 +46,9 @@ export function Servicos() {
     queryFn: listarServicos,
   })
   const servicos = servicosQuery.data ?? []
+  const servicosFiltrados = servicos.filter((servico) =>
+    correspondeABusca(busca, servico.descricao),
+  )
 
   useEffect(() => {
     if (!mensagemRecebida) return
@@ -188,6 +194,31 @@ export function Servicos() {
       )}
 
       {servicosQuery.isSuccess && servicos.length > 0 && (
+        <CampoBusca
+          valor={busca}
+          onChange={setBusca}
+          placeholder="Buscar serviço por descrição"
+          ariaLabel="Buscar serviços"
+        />
+      )}
+
+      {servicosQuery.isSuccess &&
+        servicos.length > 0 &&
+        servicosFiltrados.length === 0 && (
+          <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-border bg-card px-6 py-12 text-center">
+            <Wrench size={40} className="text-muted" aria-hidden="true" />
+            <div>
+              <p className="font-medium text-foreground">
+                Nenhum serviço encontrado
+              </p>
+              <p className="mt-1 text-sm text-muted">
+                Tente buscar por outra descrição.
+              </p>
+            </div>
+          </div>
+        )}
+
+      {servicosQuery.isSuccess && servicosFiltrados.length > 0 && (
         <div className="overflow-hidden rounded-sm border border-border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full min-w-3xl border-collapse text-left">
@@ -198,7 +229,9 @@ export function Servicos() {
                       key={coluna}
                       scope="col"
                       className={`border-b border-border px-5 py-4 font-medium ${
-                        coluna === 'Ações' ? 'text-right' : ''
+                        coluna === 'Ações'
+                          ? 'sticky right-0 z-10 border-l border-border bg-surface text-right'
+                          : ''
                       }`}
                     >
                       {coluna}
@@ -208,10 +241,10 @@ export function Servicos() {
               </thead>
 
               <tbody className="divide-y divide-border">
-                {servicos.map((servico) => (
+                {servicosFiltrados.map((servico) => (
                   <tr
                     key={servico.id}
-                    className="text-sm text-foreground transition-colors hover:bg-surface"
+                    className="group text-sm text-foreground transition-colors hover:bg-surface"
                   >
                     <td className="px-5 py-4 font-medium">
                       {servico.descricao}
@@ -222,7 +255,7 @@ export function Servicos() {
                     <td className="whitespace-nowrap px-5 py-4 text-muted">
                       {formatarDuracao(servico.tempo_estimado_min)}
                     </td>
-                    <td className="whitespace-nowrap px-5 py-4 text-right">
+                    <td className="sticky right-0 z-10 w-px border-l border-border bg-card px-5 py-4 text-right whitespace-nowrap transition-colors group-hover:bg-surface">
                       <div className="flex items-center justify-end gap-1">
                         <Link
                           to={`/servicos/${servico.id}/editar`}

@@ -206,7 +206,9 @@ export function DetalhesCliente() {
                           key={coluna}
                           scope="col"
                           className={`border-b border-border px-5 py-3 font-medium ${
-                            coluna === 'Ações' ? 'text-right' : ''
+                            coluna === 'Ações'
+                              ? 'sticky right-0 z-10 border-l border-border bg-surface text-right'
+                              : ''
                           }`}
                         >
                           {coluna}
@@ -219,7 +221,7 @@ export function DetalhesCliente() {
                   {veiculos.map((veiculo) => (
                     <tr
                       key={veiculo.id}
-                      className="text-sm text-foreground transition-colors hover:bg-surface"
+                      className="group text-sm text-foreground transition-colors hover:bg-surface"
                     >
                       <td className="whitespace-nowrap px-5 py-3 font-medium">
                         {formatarPlaca(veiculo.placa)}
@@ -233,7 +235,7 @@ export function DetalhesCliente() {
                       <td className="whitespace-nowrap px-5 py-3 text-muted">
                         {veiculo.ano || '—'}
                       </td>
-                      <td className="whitespace-nowrap px-5 py-3 text-right">
+                      <td className="sticky right-0 z-10 w-px border-l border-border bg-card px-5 py-3 text-right whitespace-nowrap transition-colors group-hover:bg-surface">
                         <Link
                           to={`/veiculos/${veiculo.id}/editar?clienteId=${cliente.id}`}
                           aria-label={`Editar veículo ${formatarPlaca(veiculo.placa)}`}

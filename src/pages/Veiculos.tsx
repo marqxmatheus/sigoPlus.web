@@ -14,9 +14,11 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getApiErrorMessage } from '../api/client'
 import { listarClientes } from '../api/clientes'
 import { excluirVeiculo, listarVeiculos } from '../api/veiculos'
+import { CampoBusca } from '../components/CampoBusca'
 import { ModalConfirmacaoExclusao } from '../components/ModalConfirmacaoExclusao'
 import type { Veiculo } from '../types/veiculo'
 import { formatarPlaca } from '../utils/formatters'
+import { correspondeABusca } from '../utils/search'
 
 const colunas = ['Placa', 'Marca', 'Modelo', 'Ano', 'Proprietário', 'Ações']
 
@@ -33,6 +35,7 @@ export function Veiculos() {
     mensagemRecebida ?? null,
   )
   const [erroExclusao, setErroExclusao] = useState<string | null>(null)
+  const [busca, setBusca] = useState('')
   const [veiculoExcluindoId, setVeiculoExcluindoId] = useState<number | null>(
     null,
   )
@@ -50,6 +53,17 @@ export function Veiculos() {
   const veiculos = veiculosQuery.data ?? []
   const clientesPorId = new Map(
     (clientesQuery.data ?? []).map((cliente) => [cliente.id, cliente.nome]),
+  )
+  const veiculosFiltrados = veiculos.filter((veiculo) =>
+    correspondeABusca(
+      busca,
+      veiculo.placa,
+      formatarPlaca(veiculo.placa),
+      veiculo.marca,
+      veiculo.modelo,
+      veiculo.ano,
+      clientesPorId.get(veiculo.cliente_id) ?? 'Cliente excluído',
+    ),
   )
   const possuiErro = veiculosQuery.isError || clientesQuery.isError
   const carregando =
@@ -204,6 +218,32 @@ export function Veiculos() {
       )}
 
       {!carregando && !possuiErro && veiculos.length > 0 && (
+        <CampoBusca
+          valor={busca}
+          onChange={setBusca}
+          placeholder="Buscar por placa, marca, modelo ou proprietário"
+          ariaLabel="Buscar veículos"
+        />
+      )}
+
+      {!carregando &&
+        !possuiErro &&
+        veiculos.length > 0 &&
+        veiculosFiltrados.length === 0 && (
+          <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-border bg-card px-6 py-12 text-center">
+            <CarFront size={40} className="text-muted" aria-hidden="true" />
+            <div>
+              <p className="font-medium text-foreground">
+                Nenhum veículo encontrado
+              </p>
+              <p className="mt-1 text-sm text-muted">
+                Tente buscar por outra placa, modelo ou proprietário.
+              </p>
+            </div>
+          </div>
+        )}
+
+      {!carregando && !possuiErro && veiculosFiltrados.length > 0 && (
         <div className="overflow-hidden rounded-sm border border-border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full min-w-5xl border-collapse text-left">
@@ -214,7 +254,9 @@ export function Veiculos() {
                       key={coluna}
                       scope="col"
                       className={`border-b border-border px-5 py-4 font-medium ${
-                        coluna === 'Ações' ? 'text-right' : ''
+                        coluna === 'Ações'
+                          ? 'sticky right-0 z-10 border-l border-border bg-surface text-right'
+                          : ''
                       }`}
                     >
                       {coluna}
@@ -224,10 +266,10 @@ export function Veiculos() {
               </thead>
 
               <tbody className="divide-y divide-border">
-                {veiculos.map((veiculo) => (
+                {veiculosFiltrados.map((veiculo) => (
                   <tr
                     key={veiculo.id}
-                    className="text-sm text-foreground transition-colors hover:bg-surface"
+                    className="group text-sm text-foreground transition-colors hover:bg-surface"
                   >
                     <td className="whitespace-nowrap px-5 py-4 font-medium">
                       {formatarPlaca(veiculo.placa)}
@@ -245,7 +287,7 @@ export function Veiculos() {
                       {clientesPorId.get(veiculo.cliente_id) ??
                         'Cliente excluído'}
                     </td>
-                    <td className="whitespace-nowrap px-5 py-4 text-right">
+                    <td className="sticky right-0 z-10 w-px border-l border-border bg-card px-5 py-4 text-right whitespace-nowrap transition-colors group-hover:bg-surface">
                       <div className="flex items-center justify-end gap-1">
                         <Link
                           to={`/veiculos/${veiculo.id}/editar`}
