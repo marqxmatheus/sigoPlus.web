@@ -7,11 +7,17 @@ import {
   Wrench,
   Package,
   ChartNoAxesCombined,
+  ClipboardList,
   PanelLeft,
 } from 'lucide-react'
 
 const links = [
   { nome: 'Home', rota: '/', icone: House },
+  {
+    nome: 'Ordens de serviço',
+    rota: '/ordens-servico',
+    icone: ClipboardList,
+  },
   { nome: 'Clientes', rota: '/clientes', icone: Users },
   { nome: 'Veículos', rota: '/veiculos', icone: CarFront },
   { nome: 'Serviços', rota: '/servicos', icone: Wrench },

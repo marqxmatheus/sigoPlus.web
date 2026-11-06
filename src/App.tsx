@@ -11,6 +11,8 @@ import { CadastroServico } from './pages/CadastroServico'
 import { Pecas } from './pages/Pecas'
 import { CadastroPeca } from './pages/CadastroPeca'
 import { DetalhesCliente } from './pages/DetalhesCliente'
+import { OrdensServico } from './pages/OrdensServico'
+import { CadastroOrdemServico } from './pages/CadastroOrdemServico'
 
 export default function App() {
   return (
@@ -32,6 +34,12 @@ export default function App() {
           <Route path="/pecas" element={<Pecas />} />
           <Route path="/pecas/cadastro" element={<CadastroPeca />} />
           <Route path="/pecas/:id/editar" element={<CadastroPeca />} />
+          <Route path="/ordens-servico" element={<OrdensServico />} />
+          <Route
+            path="/ordens-servico/cadastro"
+            element={<CadastroOrdemServico />}
+          />
+          <Route path="/ordens-servico/:id" element={<OrdensServico />} />
         </Route>
       </Routes>
     </BrowserRouter>

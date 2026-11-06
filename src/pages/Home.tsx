@@ -3,12 +3,19 @@ import {
   ArrowRight,
   CarFront,
   ChartNoAxesCombined,
+  ClipboardList,
   Package,
   Users,
   Wrench,
 } from 'lucide-react'
 
 const paginas = [
+  {
+    nome: 'Ordens de serviço',
+    descricao: 'Crie orçamentos e acompanhe os serviços da oficina.',
+    rota: '/ordens-servico',
+    icone: ClipboardList,
+  },
   {
     nome: 'Clientes',
     descricao: 'Cadastre e gerencie os clientes da oficina.',
